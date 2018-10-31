@@ -33,9 +33,17 @@ declare -a repos=("my-repo-1"
                   "my-repo-3")
 ```
 
-## Execution
+Optionally, to configure the import script you can edit the data-set name and configure the `issue` and `pull` table name. This step is only required if you for some reason have name conflicts in your BiqQuery project.
 
-You can execute the script using this command:
+```shell
+declare -r ds="github"
+declare -r issues_table="issues"
+declare -r pulls_table="pulls"
+```
+
+## Export
+
+To execute the GitHub export script run this command:
 
 ```shell
 ./export
@@ -49,3 +57,42 @@ Downloading prs for org/repo-1...
 Downloading issues for org/repo-2...
 Downloading prs for org/repo-2...
 ```
+
+## Import
+
+To execute the BigQuery import script run this command:
+
+```shell
+./import
+```
+
+The expected output should look something like this
+
+```shell
+Dataset 'project:github' successfully created.
+Table 'project:github.issues' successfully created.
+Table 'project:github.pulls' successfully created.
+Waiting on bqjob_..._1 ... (0s) Current status: DONE
+Waiting on bqjob_..._1 ... (0s) Current status: DONE
+```
+
+### Query
+
+When the above scripts completed successfully you should be able to query the imported data using SQL in BigQuery console:
+
+```sql
+select
+  i.repo,
+  count(*) num_of_issues
+from gh.pulls i
+where date_diff(CURRENT_DATE(), date(i.ts), day) < 31
+group by
+  i.repo,
+order by 2 desc
+```
+
+### TODO
+
+* Add org user export/import
+* Sort out the 2nd run where tables have to be appended
+* Bash, really? Can I haz me a service?
