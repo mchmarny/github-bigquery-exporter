@@ -1,0 +1,33 @@
+#!/bin/bash
+
+declare -r ds="github"
+declare -r issues_table="issues"
+declare -r pulls_table="pulls"
+
+
+# create dataset and table
+bq mk "${ds}"
+bq mk "${ds}.${issues_table}"
+bq mk "${ds}.${pulls_table}"
+
+bq query --use_legacy_sql=false "
+  CREATE OR REPLACE TABLE ${ds}.${issues_table} (
+    repo STRING NOT NULL,
+    id STRING NOT NULL,
+    username STRING NOT NULL,
+    ts TIMESTAMP NOT NULL,
+    status STRING NOT NULL
+)"
+
+bq load "${ds}.${issues_table}" ./issues.csv
+
+bq query --use_legacy_sql=false "
+  CREATE OR REPLACE TABLE ${ds}.${pulls_table} (
+    repo STRING NOT NULL,
+    id STRING NOT NULL,
+    username STRING NOT NULL,
+    ts TIMESTAMP NOT NULL,
+    status STRING NOT NULL
+)"
+
+bq load "${ds}.${pulls_table}" ./pulls.csv

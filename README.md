@@ -35,4 +35,17 @@ declare -a repos=("my-repo-1"
 
 ## Execution
 
-To run the
+You can execute the script using this command:
+
+```shell
+./export
+```
+
+The expected output should look something like this
+
+```shell
+Downloading issues for org/repo-1...
+Downloading prs for org/repo-1...
+Downloading issues for org/repo-2...
+Downloading prs for org/repo-2...
+```

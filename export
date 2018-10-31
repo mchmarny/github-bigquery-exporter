@@ -60,6 +60,3 @@ done
 echo "Cleaning up exported issue and pr data..."
 sed -i '' '/^$/d' ./issues.csv
 sed -i '' '/^$/d' ./pulls.csv
-
-
-# TODO: Add BigQuery import
