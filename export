@@ -1,0 +1,62 @@
+#!/bin/bash
+
+
+# repos in the org
+declare -r org="knative"
+declare -a repos=("build-templates"
+                  "build-pipeline"
+                  "docs"
+                  "serving"
+                  "build"
+                  "eventing")
+
+mkdir -p ./data/issues
+mkdir -p ./data/pulls
+
+# for each repo
+for r in "${repos[@]}"
+do
+
+    # for 1-10
+    # TODO: stop on empties to avoid the 10 queries
+    for i in {1..10}
+    do
+
+        echo "Downloadig issues for ${org}/${r}-${i}..."
+        curl -s -H "Authorization: token ${GITHUB_ACCESS_TOKEN}" \
+            "https://api.github.com/repos/${org}/${r}/issues?state=all&per_page=100&page=${i}" \
+            --output "./data/issues/issue-${r}-${i}.json"
+
+        # convert JSON to CSV
+        json2csv -i "./data/issues/issue-${r}-${i}.json" \
+            -f make.sure.empty,id,user.login,created_at,state \
+            -H -a --default-value="${r}" --include-empty-rows \
+            >> ./issues.csv
+
+        # insert empty line in case of empty payload from API
+        echo $'\n' >> ./issues.csv
+
+        echo "Downloadig prs for ${r}-${i}..."
+        curl -s -H "Authorization: token ${GITHUB_ACCESS_TOKEN}" \
+            "https://api.github.com/repos/${org}/${r}/pulls?state=all&per_page=100&page=${i}" \
+            --output "./data/pulls/pr-${r}-${i}.json"
+
+        # convert JSON to CSV
+        json2csv -i "./data/pulls/pr-${r}-${i}.json" \
+            -f head.repo.name,id,user.login,created_at,state \
+            -H -a --default-value="${r}" --include-empty-rows \
+            >> ./pulls.csv
+
+        # insert empty line in case of empty payload from API
+        echo $'\n' >> ./pulls.csv
+
+    done
+
+done
+
+# remove empty lines on the end
+sed -i '' '/^$/d' ./issues.csv
+sed -i '' '/^$/d' ./pulls.csv
+
+
+# TODO: Add BigQuery import
