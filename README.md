@@ -78,14 +78,14 @@ Waiting on bqjob_..._1 ... (0s) Current status: DONE
 
 ### Query
 
-When the above scripts completed successfully you should be able to query the imported data using SQL in BigQuery console:
+When the above scripts completed successfully you should be able to query the imported data using SQL in BigQuery console. For example to find repositories with most issues over last 90 days:
 
 ```sql
 select
   i.repo,
   count(*) num_of_issues
 from gh.pulls i
-where date_diff(CURRENT_DATE(), date(i.ts), day) < 31
+where date_diff(CURRENT_DATE(), date(i.ts), day) < 90
 group by
   i.repo,
 order by 2 desc
