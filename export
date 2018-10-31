@@ -22,12 +22,13 @@ do
     for i in {1..10}
     do
 
-        echo "Downloadig issues for ${org}/${r}-${i}..."
+        echo "Downloading issues for ${org}/${r}-${i}..."
         curl -s -H "Authorization: token ${GITHUB_ACCESS_TOKEN}" \
             "https://api.github.com/repos/${org}/${r}/issues?state=all&per_page=100&page=${i}" \
             --output "./data/issues/issue-${r}-${i}.json"
 
         # convert JSON to CSV
+        echo "Converting issue data for ${org}/${r}-${i}..."
         json2csv -i "./data/issues/issue-${r}-${i}.json" \
             -f make.sure.empty,id,user.login,created_at,state \
             -H -a --default-value="${r}" --include-empty-rows \
@@ -36,12 +37,13 @@ do
         # insert empty line in case of empty payload from API
         echo $'\n' >> ./issues.csv
 
-        echo "Downloadig prs for ${r}-${i}..."
+        echo "Downloading prs for ${r}-${i}..."
         curl -s -H "Authorization: token ${GITHUB_ACCESS_TOKEN}" \
             "https://api.github.com/repos/${org}/${r}/pulls?state=all&per_page=100&page=${i}" \
             --output "./data/pulls/pr-${r}-${i}.json"
 
         # convert JSON to CSV
+        echo "Converting pr data for ${org}/${r}-${i}..."
         json2csv -i "./data/pulls/pr-${r}-${i}.json" \
             -f head.repo.name,id,user.login,created_at,state \
             -H -a --default-value="${r}" --include-empty-rows \
@@ -55,6 +57,7 @@ do
 done
 
 # remove empty lines on the end
+echo "Cleaning up exported issue and pr data..."
 sed -i '' '/^$/d' ./issues.csv
 sed -i '' '/^$/d' ./pulls.csv
 

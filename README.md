@@ -1,6 +1,6 @@
 # github-bigquery-exporter
 
-GitHub BigQuery export utility, for those times when more granular PR and Issue queries are required.
+GitHub BigQuery export utility, for those times when more granular PR and Issue queries are required. This is also good way to query data for periods longer than the GitHub max of `30` days.
 
 ## Requirements
 
