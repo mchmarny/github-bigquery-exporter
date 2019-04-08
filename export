@@ -2,10 +2,19 @@
 
 
 # repos in the org
-declare -r org="org-name"
-declare -a repos=("repo-1"
-                  "repo-2"
-                  "repo-3")
+declare -r org="knative"
+declare -a repos=("docs"
+                  "serving"
+                  "build"
+                  "eventing"
+                  "build-templates"
+                  "build-pipeline"
+                  "client"
+                  "pkg"
+                  "eventing"
+                  "eventing-sources"
+                  "caching"
+                  "observability")
 
 mkdir -p ./data/issues
 mkdir -p ./data/pulls

@@ -87,7 +87,7 @@ select
 from gh.pulls i
 where date_diff(CURRENT_DATE(), date(i.ts), day) < 90
 group by
-  i.repo,
+  i.repo
 order by 2 desc
 ```
 
@@ -96,3 +96,180 @@ order by 2 desc
 * Add org user export/import
 * Sort out the 2nd run where tables have to be appended
 * Bash, really? Can I haz me a service?
+
+
+## Scratch
+
+### Users who have activity (pr/issue) but are NOT in the user table
+
+```sql
+with active_users as (
+  select username
+  from gh.issues
+  group by username
+
+  union all
+
+  select p.username
+  from gh.pulls p
+  group by username
+)
+select *
+from active_users
+where username not in (SELECT username from gh.users)
+```
+
+> Export results as CSV and use them as input in `user-export` which will download the GitHUb data for each one of those users. Then, when done, run `user-import` to bring those users into
+
+### Activity breakdown by company
+
+```sql
+select all_prs.company, all_prs.prs apr, coalesce(m3_prs.prs,0) rpr from (
+
+  select
+    COALESCE(u.company, 'Unknown') company,
+    COUNT(*) prs
+  from gh.pulls i
+  join gh.users u on i.username = u.username
+  group by company
+
+) all_prs
+
+left join (
+
+  select
+    COALESCE(u.company, 'Unknown') company,
+    COUNT(*) prs
+  from gh.pulls i
+  join gh.users u on i.username = u.username
+  where i.ts > "2018-10-30 23:59:59"
+  group by company
+
+) m3_prs on all_prs.company = m3_prs.company
+
+order by 2 desc
+```
+
+
+```sql
+select u.company, count(*)
+from gh.pulls i join gh.users u on i.username = u.username
+where u.company is not null
+group by company order by 2 desc
+```
+
+
+```sql
+select
+  pr_month,
+  sum(google_prs) as total_google_prs,
+  sum(non_google_prs) as total_non_google_prs
+from (
+select
+  case when u.company = 'Google' then 1 else 0 end as google_prs,
+  case when u.company = 'Google' then 0 else 1 end as non_google_prs,
+  TIMESTAMP_TRUNC(i.`on`, MONTH) as pr_month
+from gh.pulls i
+join gh.users u on i.username = u.username
+where u.company  is not null
+)
+group by pr_month
+order by 1
+```
+
+### PRs
+
+```sql
+select
+  pr_month,
+  sum(google_prs) as total_google_prs,
+  sum(non_google_prs) as total_non_google_prs
+from (
+select
+  case when u.company = 'Google' then 1 else 0 end as google_prs,
+  case when u.company = 'Google' then 0 else 1 end as non_google_prs,
+  TIMESTAMP_TRUNC(i.ts, MONTH) as pr_month
+from gh.pulls p
+join gh.users u on p.username = u.username
+where u.company <> ''
+)
+group by pr_month
+order by 1
+```
+
+### Issues
+
+```sql
+select
+  pr_month,
+  sum(google_prs) as total_google_prs,
+  sum(non_google_prs) as total_non_google_prs
+from (
+select
+  case when u.company = 'Google' then 1 else 0 end as google_prs,
+  case when u.company = 'Google' then 0 else 1 end as non_google_prs,
+  TIMESTAMP_TRUNC(i.ts, MONTH) as pr_month
+from gh.issues i
+join gh.users u on i.username = u.username
+where u.company <> ''
+)
+group by pr_month
+order by 1
+```
+
+
+```sql
+select pr_month, repo, count(*) as prs
+from (
+select
+  i.repo,
+  TIMESTAMP_TRUNC(i.ts, MONTH) as pr_month
+from gh.pulls i
+join gh.users u on i.username = u.username
+where u.company is not null
+)
+group by pr_month, repo
+order by 1, 3 desc
+```
+
+
+```sql
+select
+  pr_month,
+  repo,
+  count(*) action
+from (
+
+  select
+    repo,
+    SUBSTR(CAST(TIMESTAMP_TRUNC(ts, MONTH) as STRING),0,7) as pr_month
+  from gh.issues
+
+  union all
+
+  select
+    repo,
+    SUBSTR(CAST(TIMESTAMP_TRUNC(ts, MONTH) as STRING),0,7) as pr_month
+  from gh.pulls
+
+)
+where repo = 'build' --'build-pipeline'
+group by repo, pr_month
+order by 1, 2
+```
+
+```sql
+ select repo, count(*) from (
+ select
+    repo
+  from gh.issues
+
+  union all
+
+  select
+    repo
+  from gh.pulls
+)
+group by repo
+order by 2 desc
+```

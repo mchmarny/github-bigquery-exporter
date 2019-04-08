@@ -1,0 +1,29 @@
+#!/bin/bash
+
+declare -a usersFilePath="./data/missing/all.csv"
+
+mkdir -p ./data/users
+
+while IFS='' read -r user || [[ -n "$user" ]]; do
+
+    echo "Downloading user for /users/${user}..."
+    curl -s -H "Authorization: token ${GITHUB_ACCESS_TOKEN}" \
+        "https://api.github.com/users/${user}" \
+        --output "./data/users/user-${user}.json"
+
+    # convert JSON to CSV
+    echo "Converting user data for ${user}..."
+    json2csv -i "./data/users/user-${user}.json" \
+        -f login,name,email,location,company \
+        -H -a --include-empty-rows --default-value="" \
+        >> ./users.csv
+
+    # insert empty line
+    echo $'\n' >> ./users.csv
+
+
+done < $usersFilePath
+
+# remove empty lines on the end
+echo "Cleaning up exported user data..."
+sed -i '' '/^$/d' ./users.csv

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+declare -r ds="gh"
+declare -r user_table="users"
+
+
+# create dataset and table
+bq mk "${ds}"
+bq mk "${ds}.${user_table}"
+
+bq query --use_legacy_sql=false "
+  CREATE OR REPLACE TABLE ${ds}.${user_table} (
+    username STRING NOT NULL,
+    fullname STRING,
+    email STRING,
+    geo STRING,
+    company STRING
+)"
+
+bq load "${ds}.${user_table}" ./users.csv
+
+
+# bq query --allow_large_results --append_table --noflatten_results --destination_table 'gh.users_backup' 'select * from gh.users';

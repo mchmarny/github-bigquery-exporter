@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -r ds="github"
+declare -r ds="gh"
 declare -r issues_table="issues"
 declare -r pulls_table="pulls"
 

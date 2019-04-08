@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+bq query --allow_large_results --append_table --noflatten_results \
+--destination_table 'gh.users_backup' 'select * from gh.users'
